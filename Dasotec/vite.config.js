@@ -12,7 +12,7 @@ export default defineConfig({
     vueDevTools(),
     tailwindcss()
   ],
-  base: '/dasotec/',
+  base: '/Dasotec/',
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
