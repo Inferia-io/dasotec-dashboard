@@ -455,6 +455,7 @@ export function aggregateRows(rows) {
   const orderedDaily = [...dailyCount.entries()].sort((left, right) => left[0].localeCompare(right[0]))
   const betaMatrices = buildBetaDistanceMatrices(sensors)
   const topSpeciesForHourly = topSpecies.slice(0, 6)
+  const topSpeciesForHourlyHeatmap = topSpecies.slice(0, 10)
   const topSpeciesForMonthly = topSpecies.slice(0, 6)
   const totalDetections = rows.length
   const globalDiversity = calculateDiversityIndexesFromCounts(speciesCount, totalDetections)
@@ -478,6 +479,13 @@ export function aggregateRows(rows) {
     }))
 
   const speciesHourlySeries = topSpeciesForHourly.map(([speciesName, total]) => ({
+    speciesName,
+    label: prettifySpeciesName(speciesName),
+    total,
+    values: [...(speciesHourlyCount.get(speciesName) || Array(24).fill(0))],
+  }))
+
+  const speciesHourlyHeatmapSeries = topSpeciesForHourlyHeatmap.map(([speciesName, total]) => ({
     speciesName,
     label: prettifySpeciesName(speciesName),
     total,
@@ -509,6 +517,7 @@ export function aggregateRows(rows) {
     dailyLabels: orderedDaily.map(([dayKey]) => dayKey),
     dailyValues: orderedDaily.map(([, count]) => count),
     speciesHourlySeries,
+    speciesHourlyHeatmapSeries,
     monthlyLabels: MONTH_LABELS,
     speciesMonthlySeries,
     stationRanking,

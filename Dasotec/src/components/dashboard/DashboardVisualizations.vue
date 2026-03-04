@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 
 import DashboardBetaHeatmaps from './DashboardBetaHeatmaps.vue'
 import DashboardCharts from './DashboardCharts.vue'
+import DashboardHourlyDistributionMatrix from './DashboardHourlyDistributionMatrix.vue'
 import DashboardMaps from './DashboardMaps.vue'
 import DashboardPhenologyCircular from './DashboardPhenologyCircular.vue'
 import DashboardSpeciesRanking from './DashboardSpeciesRanking.vue'
@@ -64,6 +65,7 @@ watch(
       </p>
       <div class="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
         <DashboardCharts :data="props.data" @error="(message) => setVisualizationError('charts', message)" />
+        <DashboardHourlyDistributionMatrix :data="props.data" />
       </div>
     </section>
 
