@@ -1,0 +1,35 @@
+{
+  "name": "dasotec",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.2.1",
+    "chart.js": "^4.5.1",
+    "jspdf": "^4.2.0",
+    "leaflet": "^1.9.4",
+    "leaflet.heat": "^0.2.0",
+    "lucide": "^0.575.0",
+    "lucide-vue-next": "^0.575.0",
+    "papaparse": "^5.5.3",
+    "plotly.js-dist": "^3.4.0",
+    "vue": "^3.5.28",
+    "vue-chartjs": "^5.3.3"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.4",
+    "autoprefixer": "^10.4.24",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.2.1",
+    "vite": "^7.3.1",
+    "vite-plugin-vue-devtools": "^8.0.6"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}
