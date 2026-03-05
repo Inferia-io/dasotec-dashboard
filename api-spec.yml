@@ -1,0 +1,218 @@
+openapi: 3.1.0
+info:
+  title: SQL Select Query API
+  version: 1.1.0
+  description: >
+    Executes user-provided SQL in read-only mode. Response can be JSON or CSV.
+
+servers:
+  - url: https://api.example.com
+
+tags:
+  - name: Query
+    description: Run SELECT queries
+
+paths:
+  /v1/query:
+    post:
+      tags: [Query]
+      summary: Execute a SELECT query and return JSON or CSV
+      description: >
+        Executes a free-form SELECT query (WITH ... SELECT allowed) against a database.
+        The server MUST reject any non-SELECT statements and must run with a read-only DB user.
+        Clients can request CSV via Accept: text/csv or format=csv.
+      operationId: runSelectQuery
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: format
+          in: query
+          required: false
+          description: Optional response format override. If omitted, use the Accept header.
+          schema:
+            type: string
+            enum: [json, csv]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QueryRequest"
+            examples:
+              csvExample:
+                value:
+                  sql: "SELECT id, name, country FROM customers ORDER BY id"
+                  maxRows: 50000
+                  timeoutMs: 20000
+      responses:
+        "200":
+          description: Query executed successfully
+          headers:
+            X-Row-Count:
+              description: Number of rows returned (after maxRows truncation if applied).
+              schema:
+                type: integer
+            X-Truncated:
+              description: Whether result was truncated due to maxRows.
+              schema:
+                type: boolean
+            X-Elapsed-Ms:
+              description: Server-measured execution time in milliseconds.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueryResponse"
+            text/csv:
+              schema:
+                type: string
+                description: CSV content with header row as the first line.
+              examples:
+                sample:
+                  value: |
+                    id,name,country
+                    1,Ana,ES
+                    2,Carlos,ES
+        "400":
+          description: Invalid input (missing fields, bad types, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Missing or invalid auth
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden by policy / RBAC
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Query rejected (not a SELECT / violates policy checks)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    QueryRequest:
+      type: object
+      additionalProperties: false
+      required: [sql]
+      properties:
+        sql:
+          type: string
+          minLength: 1
+          maxLength: 50000
+          description: >
+            Free-form SQL query. MUST be SELECT-only (WITH ... SELECT allowed).
+        params:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: string
+              - type: number
+              - type: integer
+              - type: boolean
+              - type: "null"
+          description: Named parameters to bind safely (avoid string concatenation).
+        maxRows:
+          type: integer
+          minimum: 1
+          maximum: 50000
+          default: 1000
+          description: Maximum number of rows returned (server-enforced).
+        timeoutMs:
+          type: integer
+          minimum: 100
+          maximum: 60000
+          default: 5000
+          description: Query timeout in milliseconds (server-enforced).
+        traceId:
+          type: string
+          maxLength: 128
+          description: Optional client trace id for logging/auditing.
+
+    QueryResponse:
+      type: object
+      additionalProperties: false
+      required: [rows, columns, rowCount, truncated, elapsedMs]
+      properties:
+        columns:
+          type: array
+          items:
+            $ref: "#/components/schemas/Column"
+        rows:
+          type: array
+          description: Rows as arrays aligned to columns order.
+          items:
+            type: array
+            items: {}
+        rowCount:
+          type: integer
+          minimum: 0
+        truncated:
+          type: boolean
+        elapsedMs:
+          type: integer
+          minimum: 0
+        warnings:
+          type: array
+          items:
+            type: string
+
+    Column:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+
+    Error:
+      type: object
+      additionalProperties: false
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          examples:
+            - INVALID_INPUT
+            - NOT_SELECT
+            - MULTI_STATEMENT_BLOCKED
+            - POLICY_REJECTED
+            - UNAUTHORIZED
+            - FORBIDDEN
+            - RATE_LIMITED
+            - INTERNAL_ERROR
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
